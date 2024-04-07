@@ -1,6 +1,7 @@
 ﻿using Microsoft.Playwright;
 using product_scraper.Models;
 using product_scraper.Repositories;
+using static System.Net.WebRequestMethods;
 
 namespace product_scraper;
 
@@ -9,6 +10,7 @@ public class ScraperService
     private readonly IRepository repository;
     private List<MercariListing> listings = new List<MercariListing>();
     private HashSet<string> uniqueLinks = new HashSet<string>();
+    private int newUniqueLinks = 0;
     private int repeatThreshold = 5;
     private int repeatCount = 0;
 
@@ -17,7 +19,25 @@ public class ScraperService
         this.repository = repository;
     }
 
-    public async Task ScrapeSite()
+    public async Task StartScraping()
+    {
+        List<string> Urls = new List<string> { "https://jp.mercari.com/search?order=desc&sort=created_time&category_id=20",
+                                               "https://jp.mercari.com/search?keyword=balenciaga&sort=created_time&order=desc&category_id=20",
+                                               "https://jp.mercari.com/search?keyword=hermes&sort=created_time&order=desc&category_id=20",
+                                               "https://jp.mercari.com/search?keyword=gaultier&sort=created_time&order=desc&category_id=20" ,
+                                               "https://jp.mercari.com/search?keyword=chanel&sort=created_time&order=desc&category_id=20",
+                                               "https://jp.mercari.com/search?keyword=prada&sort=created_time&order=desc&category_id=20" ,
+                                               "https://jp.mercari.com/search?keyword=dior&sort=created_time&order=desc&category_id=20" };
+
+
+
+        foreach (string Url in Urls)
+        {
+            await ScrapeSite(Url);
+        }
+    }
+
+    public async Task ScrapeSite(string Url)
     {
         var playwright = await Playwright.CreateAsync();
         var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false, Args = new[] { "--start-maximized" }, SlowMo = 50 });
@@ -39,6 +59,14 @@ public class ScraperService
             }
         });
 
+        var oldListings = await repository.GetAllListings();
+
+        foreach (var listing in oldListings)
+        {
+            uniqueLinks.Add(listing.Url);
+        }
+
+        // Do the scraping
         try
         {
             var page = await context.NewPageAsync();
@@ -46,11 +74,14 @@ public class ScraperService
 
             do
             {
+                Console.WriteLine("Starting the loop again! Woohoo!");
                 await page.WaitForSelectorAsync("li[data-testid='item-cell']", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible });
 
                 // Scroll to end of page to load all listings
-                await Task.Delay(new Random().Next(500, 2000)); 
+                await Task.Delay(new Random().Next(500, 2000));
+                Console.WriteLine("I've waited! Now I'm going to scroll!");
                 await ScrollToEnd(page);
+                Console.WriteLine("I finished scrolling!");
 
 
                 var items = await page.QuerySelectorAllAsync("li[data-testid='item-cell']");
@@ -67,17 +98,6 @@ public class ScraperService
 
                     Console.WriteLine($"Description: {description}, Price: {price}, Link: {link}");
 
-                    if (uniqueLinks.Contains(link))
-                    {
-                        repeatCount++;
-                        if (repeatCount >= repeatThreshold) break;
-                    }
-                    else
-                    {
-                        uniqueLinks.Add(link);
-                        repeatCount = 0;
-                    }
-
                     // Randomly move the mouse around
                     var boundingBox = await item.BoundingBoxAsync();
                     if (boundingBox != null)
@@ -91,8 +111,9 @@ public class ScraperService
                     
                     if (uniqueLinks.Contains(link))
                     {
-                        Console.Write($"{link} already logged! Skipping...");
-                        break;
+                        repeatCount++;
+                        Console.WriteLine($"Current repeats: {repeatCount}");
+                        if (repeatCount >= repeatThreshold) break;
                     }
                     else
                     {
@@ -107,7 +128,11 @@ public class ScraperService
                             var logMessage = $"Failed to parse price for listing: {description}, Price: {price}, Url: {link}, Time: {DateTime.UtcNow}\n";
                             File.AppendAllText($"failed_parses_{DateTime.UtcNow.Date:yyyyMMdd}.txt", logMessage);
                         }
+                        uniqueLinks.Add(link);
+                        newUniqueLinks++;
+                        repeatCount = 0;
                     }
+  
 
                     // Random delay between actions
                     await Task.Delay(new Random().Next(500, 2000)); // Random delay between 0.5 to 2 seconds
@@ -119,14 +144,14 @@ public class ScraperService
                     // Random delay between actions
                     await Task.Delay(new Random().Next(500, 2000)); // Random delay between 0.5 to 2 seconds
                     await nextButton.ClickAsync();
-                    await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
                 }
                 else
                 {
+                    Console.WriteLine("No next button found!");
                     break;
                 }
 
-            } while (repeatCount < repeatThreshold);
+            } while (repeatCount < repeatThreshold && uniqueLinks.Count < 700);
 
 
             await browser.CloseAsync();

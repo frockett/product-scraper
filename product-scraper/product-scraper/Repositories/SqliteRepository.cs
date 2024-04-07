@@ -68,13 +68,13 @@ public class SqliteRepository : IRepository
 
         Console.Write($"There are {listings.Count} listings total");
 
-        foreach (var listing in listings)
+/*        foreach (var listing in listings)
         {
             Console.WriteLine($"Desc: {listing.Description} // Price: {listing.Price.ToString()} // URL: {listing.Url} // Scraped At: {listing.CreatedAt}");
         }
         Console.WriteLine("Done!");
 
-        await RemoveOldListings();
+        await RemoveOldListings();*/
         return listings;
     }
 
