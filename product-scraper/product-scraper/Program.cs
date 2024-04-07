@@ -32,4 +32,4 @@ var scope = app.Services.CreateScope();
 
 var scraper = app.Services.GetRequiredService<ScraperService>();
 
-await scraper.ScrapeSite();
+await scraper.StartScraping();

@@ -1,7 +1,6 @@
 ﻿using Microsoft.Playwright;
 using product_scraper.Models;
 using product_scraper.Repositories;
-using static System.Net.WebRequestMethods;
 
 namespace product_scraper;
 
@@ -11,7 +10,7 @@ public class ScraperService
     private List<MercariListing> listings = new List<MercariListing>();
     private HashSet<string> uniqueLinks = new HashSet<string>();
     private int newUniqueLinks = 0;
-    private int repeatThreshold = 5;
+    private int repeatThreshold = 3;
     private int repeatCount = 0;
 
     public ScraperService(IRepository repository)
@@ -87,6 +86,9 @@ public class ScraperService
                 var items = await page.QuerySelectorAllAsync("li[data-testid='item-cell']");
                 foreach (var item in items)
                 {
+                    // TODO get the image URL
+
+                    // Cache all of the tags that have desired information
                     var imageContainer = await item.QuerySelectorAsync(".imageContainer__f8ddf3a2");
                     string? description = await imageContainer?.GetAttributeAsync("aria-label");
 
@@ -96,6 +98,7 @@ public class ScraperService
                     var linkElement = await item.QuerySelectorAsync("a[data-location='search_result:newest:body:item_list:item_thumbnail']");
                     string? link = await linkElement?.GetAttributeAsync("href");
 
+                    // Write to console during development
                     Console.WriteLine($"Description: {description}, Price: {price}, Link: {link}");
 
                     // Randomly move the mouse around
@@ -119,6 +122,7 @@ public class ScraperService
                     {
                         if (int.TryParse(price, out int parsedPrice))
                         {
+                            // All is normal, save the listing
                             listings.Add(new MercariListing { Description = description, Price = parsedPrice, Url = link });
                         }
                         else
@@ -134,15 +138,15 @@ public class ScraperService
                     }
   
 
-                    // Random delay between actions
-                    await Task.Delay(new Random().Next(500, 2000)); // Random delay between 0.5 to 2 seconds
+                    // Random delay between actions in ms
+                    await Task.Delay(new Random().Next(500, 2000));
                 }
 
+                // Go to the next page
                 var nextButton = await page.QuerySelectorAsync("[data-testid='pagination-next-button']");
                 if (nextButton != null && repeatCount < repeatThreshold)
                 {
-                    // Random delay between actions
-                    await Task.Delay(new Random().Next(500, 2000)); // Random delay between 0.5 to 2 seconds
+                    await Task.Delay(new Random().Next(500, 2000));
                     await nextButton.ClickAsync();
                 }
                 else
@@ -151,7 +155,7 @@ public class ScraperService
                     break;
                 }
 
-            } while (repeatCount < repeatThreshold && uniqueLinks.Count < 700);
+            } while (repeatCount < repeatThreshold && newUniqueLinks < 700); // 700 is an arbitrary limit, about 7 pages
 
 
             await browser.CloseAsync();
