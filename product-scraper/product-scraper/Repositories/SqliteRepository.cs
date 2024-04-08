@@ -22,22 +22,31 @@ public class SqliteRepository : IRepository
 
     public async Task AddListings(List<MercariListing> listings)
     {
-        await context.MercariListings.AddRangeAsync(listings);
-        await context.SaveChangesAsync();
-
-        // FOR TESTING
-        await GetAllListings();
+        using (var transaction = context.Database.BeginTransaction())
+        {
+            try
+            {
+                await context.MercariListings.AddRangeAsync(listings);
+                await context.SaveChangesAsync();
+                transaction.Commit();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                transaction.Rollback();
+            }
+        }
     }
 
     public async Task<bool> DeleteFilter(FilterCriteria filter)
     {
-        var filterToDelete =  context.FilterCriteria.FirstOrDefaultAsync(f => f.Id == filter.Id);
+        var filterToDelete =  await context.FilterCriteria.FirstOrDefaultAsync(f => f.Id == filter.Id);
 
         try
         {
             if (filterToDelete != null)
             {
-                context.FilterCriteria.Remove(filter);
+                context.FilterCriteria.Remove(filterToDelete);
                 await context.SaveChangesAsync();
             }
             else return false;
@@ -58,18 +67,10 @@ public class SqliteRepository : IRepository
 
     public async Task<List<MercariListing>> GetAllListings()
     {
-        // FOR TESTING
         var listings = await context.MercariListings.ToListAsync();
 
         Console.Write($"There are {listings.Count} listings total");
 
-/*        foreach (var listing in listings)
-        {
-            Console.WriteLine($"Desc: {listing.Description} // Price: {listing.Price.ToString()} // URL: {listing.Url} // Scraped At: {listing.CreatedAt}");
-        }
-        Console.WriteLine("Done!");
-
-        await RemoveOldListings();*/
         return listings;
     }
 

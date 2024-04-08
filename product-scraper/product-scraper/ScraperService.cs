@@ -168,7 +168,10 @@ public class ScraperService
                             // Save listing with dummy price and log the error
                             listings.Add(new MercariListing { Description = description, Price = 0, Url = link });
                             var logMessage = $"Failed to parse price for listing: {description}, Price: {price}, Url: {link}, Time: {DateTime.UtcNow}\n";
-                            File.AppendAllText($"failed_parses_{DateTime.UtcNow.Date:yyyyMMdd}.txt", logMessage);
+                            var logDirectory = "logs";
+                            Directory.CreateDirectory(logDirectory);
+                            var logFilePath = Path.Combine(logDirectory, $"failed_parses_{DateTime.UtcNow.Date:yyyyMMdd}.txt");
+                            await File.AppendAllTextAsync(logFilePath, logMessage);
                         }
                         uniqueLinks.Add(link);
                         newUniqueLinks++;
@@ -206,7 +209,7 @@ public class ScraperService
 
             Directory.CreateDirectory(logDirectory);
 
-            File.AppendAllText(logFilePath, logMessage);
+            await File.AppendAllTextAsync(logFilePath, logMessage);
 
             Console.WriteLine($"An error occurred: {ex.Message}");
         }
