@@ -24,14 +24,12 @@ public class Menu
                 "Delete Filter",
                 "In/activate URLs",
                 "Add URL",
-                "Reset all emailed flags [CAUTION]",
+                "Reset all emailed flags CAUTION",
                 "Exit Program",};
 
         string choice = AnsiConsole.Prompt(
                             new SelectionPrompt<string>()
-                            .Title("Which operation would you like to perform? Use [green]arrow[/] and [green]enter[/] keys to make a selection.")
-                            .PageSize(10)
-                            .MoreChoicesText("Keep scrolling for more options")
+                            .Title("Which operation would you like to perform?")
                             .AddChoices(menuOptions));
 
         /* Before, the menu selection was parsed based on an int.parse of the first character, which was a number. 
@@ -66,6 +64,7 @@ public class Menu
     private async Task HandleResetFlags()
     {
         await repository.ResetEmailFlags();
+        await WaitForUser();
     }
 
     private async Task HandleAddFilterAsync()

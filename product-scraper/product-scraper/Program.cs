@@ -10,11 +10,6 @@ using product_scraper.UI;
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-
-
-//var builder = Host.CreateApplicationBuilder();
-
-
 var builder = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) =>
     {
@@ -42,8 +37,18 @@ var builder = Host.CreateDefaultBuilder(args)
 
 var app = builder.Build();
 
-/*await app.Services.GetRequiredService<ScraperService>().StartScraping();*/
+if (args.Length > 0 && args[0] == "menu")
+{
+    var menu = app.Services.GetRequiredService<Menu>();
+    await menu.MainMenuAsync();
+}
+else
+{
+    await app.Services.GetRequiredService<ScraperService>().StartScraping();
+    // TODO decouple this from the emailservice, because currently it's all chained together.
+    await app.Services.GetRequiredService<IFilterService>().FilterAllUnemailedListings();
+}
 
-// TODO decouple this from the emailservice, because currently it's all chained together.
-await app.Services.GetRequiredService<IFilterService>().FilterAllUnemailedListings();
+
+
 

@@ -22,7 +22,6 @@ public class MercariScraper : IScraper
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
         };
     private int repeatLimit = 5;
-    private int repeatCount = 0;
     private int newLinkLimit = 500;
 
     public MercariScraper(IServiceScopeFactory scopeFactory)
@@ -38,7 +37,7 @@ public class MercariScraper : IScraper
         {
             Headless = false,
             //Args = new[] { "--start-maximized" }, 
-            SlowMo = 50
+            //SlowMo = 50
         });
 
         var context = await browser.NewContextAsync(new BrowserNewContextOptions
@@ -98,6 +97,7 @@ public class MercariScraper : IScraper
         List<MercariListing> listings = new List<MercariListing>(); // Instatiate new list here so its fresh each time
         var oldListings = await repository.GetAllListings(); // Put old items into list
         int newUniqueLinks = 0; // Start the counter for new unique links
+        int repeatCount = 0; // reset repeat count at the start of each scrape
 
         foreach (var listing in oldListings)
         {
@@ -116,7 +116,7 @@ public class MercariScraper : IScraper
                 await page.WaitForSelectorAsync("li[data-testid='item-cell']", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible });
 
                 // Scroll to end of page to load all listings
-                await Task.Delay(new Random().Next(500, 2000));
+                await Task.Delay(new Random().Next(500, 1500));
                 Console.WriteLine("I've waited! Now I'm going to scroll!");
                 await ScrollToEnd(page);
                 Console.WriteLine("I finished scrolling!");
@@ -148,7 +148,7 @@ public class MercariScraper : IScraper
                     if (boundingBox != null)
                     {
                         await page.Mouse.MoveAsync(boundingBox.X + boundingBox.Width / 2, boundingBox.Y + boundingBox.Height / 2);
-                        await Task.Delay(new Random().Next(100, 500)); // Short pause after moving the mouse
+                        await Task.Delay(new Random().Next(100, 300)); // Short pause after moving the mouse
                     }
                     await page.Mouse.MoveAsync(new Random().Next(0, 500), new Random().Next(0, 500)); // Adjust dimensions based on expected page size
 
@@ -165,12 +165,12 @@ public class MercariScraper : IScraper
                         if (int.TryParse(price, out int parsedPrice))
                         {
                             // All is normal, save the listing
-                            listings.Add(new MercariListing { Description = description, Price = parsedPrice, Url = link });
+                            listings.Add(new MercariListing { Description = description, Price = parsedPrice, Url = link, ImgUrl = imgUrl });
                         }
                         else
                         {
                             // Save listing with dummy price and log the error
-                            listings.Add(new MercariListing { Description = description, Price = 0, Url = link });
+                            listings.Add(new MercariListing { Description = description, Price = 0, Url = link, ImgUrl = imgUrl });
                             var logMessage = $"Failed to parse price for listing: {description}, Price: {price}, Url: {link}, Time: {DateTime.UtcNow}\n";
                             var logDirectory = "logs";
                             Directory.CreateDirectory(logDirectory);
@@ -184,7 +184,7 @@ public class MercariScraper : IScraper
 
 
                     // Random delay between actions in ms
-                    await Task.Delay(new Random().Next(500, 2000));
+                    await Task.Delay(new Random().Next(100, 1000));
                 }
 
                 // Go to the next page
