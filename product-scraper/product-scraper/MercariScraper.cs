@@ -31,7 +31,7 @@ public class MercariScraper : IScraper
     }
 
     // Set up the browser and context then scrape each URL
-    public async Task StartScraping(List<UrlsToScrape> urls)
+    public async Task StartScraping(List<UrlToScrape> urls)
     {
         var playwright = await Playwright.CreateAsync();
         var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
@@ -73,7 +73,7 @@ public class MercariScraper : IScraper
             urls = await repository.GetActiveUrls();
         }*/
 
-        foreach (UrlsToScrape url in urls)
+        foreach (UrlToScrape url in urls)
         {
             using (var scope = scopeFactory.CreateScope())
             {

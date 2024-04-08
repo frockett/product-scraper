@@ -7,6 +7,6 @@ namespace product_scraper;
 public interface IScraper
 {
     Task ScrapeSite(IBrowserContext context, IRepository repository, string url);
-    Task StartScraping(List<UrlsToScrape> urls);
+    Task StartScraping(List<UrlToScrape> urls);
     bool CanHandleUrl(string url);
 }

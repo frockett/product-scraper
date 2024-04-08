@@ -20,21 +20,21 @@ public class ScraperService
 
     public async Task StartScraping()
     {
-        List<UrlsToScrape> urls;
+        List<UrlToScrape> urls;
         using (var scope = scopeFactory.CreateScope())
         {
             var repository = scope.ServiceProvider.GetRequiredService<IRepository>();
             urls = await repository.GetActiveUrls();
         }
 
-        var categorizedUrls = new Dictionary<string, List<UrlsToScrape>>();
+        var categorizedUrls = new Dictionary<string, List<UrlToScrape>>();
 
         foreach (var url in urls)
         {
             string scraperKey = await DetermineScraperKey(url.Url);
             if (!categorizedUrls.ContainsKey(scraperKey))
             {
-                categorizedUrls[scraperKey] = new List<UrlsToScrape>();
+                categorizedUrls[scraperKey] = new List<UrlToScrape>();
             }
             categorizedUrls[scraperKey].Add(url);
         }

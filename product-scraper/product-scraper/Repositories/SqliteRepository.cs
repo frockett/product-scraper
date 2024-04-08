@@ -38,6 +38,18 @@ public class SqliteRepository : IRepository
         }
     }
 
+    public async Task AddUrl(UrlToScrape url)
+    {
+        try
+        {
+            await context.Urls.AddAsync(url);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occured adding the url {url.Url}. Exception: {ex.Message}");
+        }
+    }
+
     public async Task<bool> DeleteFilter(FilterCriteria filter)
     {
         var filterToDelete =  await context.FilterCriteria.FirstOrDefaultAsync(f => f.Id == filter.Id);
@@ -73,11 +85,11 @@ public class SqliteRepository : IRepository
 
         return listings;
     }
-    public async Task<List<UrlsToScrape>> GetActiveUrls()
+    public async Task<List<UrlToScrape>> GetActiveUrls()
     {
         return await context.Urls.Where(u => u.Active == true).ToListAsync();  
     }
-    public async Task<List<UrlsToScrape>> GetAllUrls()
+    public async Task<List<UrlToScrape>> GetAllUrls()
     {
         return await context.Urls.ToListAsync();
     }
@@ -85,6 +97,20 @@ public class SqliteRepository : IRepository
     public async Task<List<MercariListing>> GetUnemailedListings()
     {
         return await context.MercariListings.Where(l => !l.IsEmailed).ToListAsync();
+    }
+
+    public async Task ToggleUrlActiveStatus(int urlId)
+    {
+        var urlEntity = await context.Urls.FindAsync(urlId);
+        if (urlEntity != null)
+        {
+            urlEntity.Active = !urlEntity.Active;
+            await context.SaveChangesAsync();
+        }
+        else
+        {
+            throw new KeyNotFoundException($"No URL found with ID: {urlId}");
+        }
     }
 
     public async Task MarkListingsAsEmailed(List<int> listingIds)
@@ -119,5 +145,23 @@ public class SqliteRepository : IRepository
     {
         var filterCriteria = await context.FilterCriteria.ToListAsync();
         return filterCriteria;
+    }
+
+    public async Task ResetEmailFlags()
+    {
+        try
+        {
+            var flaggedListings = await context.MercariListings.Where(x => x.IsEmailed).ToListAsync();
+
+            foreach (var listing in flaggedListings)
+            {
+                listing.IsEmailed = false;
+            }
+            await context.SaveChangesAsync();
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine($"Database operation failed. {ex.Message}");
+        }
     }
 }

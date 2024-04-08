@@ -8,15 +8,18 @@ namespace product_scraper.Services;
 public class FilterService : IFilterService
 {
     private readonly IRepository repository;
+    private readonly EmailService emailService;
 
-    public FilterService(IRepository repository)
+    public FilterService(IRepository repository, EmailService emailService)
     {
         this.repository = repository;
+        this.emailService = emailService;
     }
 
     public async Task<List<MercariListingDto>> FilterAllUnemailedListings()
     {
         List<MercariListingDto> flaggedListings = new();
+        List<int> flaggedIds = new();
 
         var allListings = await repository.GetUnemailedListings();
         var filters = await repository.GetAllFilterCriteria();
@@ -39,17 +42,18 @@ public class FilterService : IFilterService
                         ImgUrl = item.ImgUrl,
                         Filter = filter
                     });
+                    flaggedIds.Add(item.Id);
                 }
             }
 
         }
 
-        foreach (var listing in flaggedListings)
-        {
-            Console.WriteLine($"Keyword matched: {String.Join(", ", listing.Filter.Keywords)}");
-            Console.WriteLine($"Description: {listing.Description}, Price: {listing.Price}, Url: {listing.Url}");
-        }
+        // Flag them as emailed in the database.
+        // await repository.MarkListingsAsEmailed(flaggedIds);
 
+
+        // Generate the HTML for the email
+        await emailService.GenerateEmailHtml(flaggedListings);
         return flaggedListings;
     }
 }

@@ -1,5 +1,4 @@
-﻿using Microsoft.Playwright;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using product_scraper.Data;
@@ -36,14 +35,15 @@ var builder = Host.CreateDefaultBuilder(args)
 
         // Filtering and reporting
         services.AddScoped<IFilterService, FilterService>();
+        services.AddScoped<EmailService>();
     });
 
 
 
 var app = builder.Build();
 
-await app.Services.GetRequiredService<ScraperService>().StartScraping();
+/*await app.Services.GetRequiredService<ScraperService>().StartScraping();*/
 
-/*await app.Services.GetRequiredService<IFilterService>().FilterAllUnemailedListings();
-*/
-/*await app.Services.GetRequiredService<IScraper>().StartScraping();*/
+// TODO decouple this from the emailservice, because currently it's all chained together.
+await app.Services.GetRequiredService<IFilterService>().FilterAllUnemailedListings();
+

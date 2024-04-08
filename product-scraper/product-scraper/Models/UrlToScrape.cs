@@ -1,7 +1,7 @@
 ﻿
 namespace product_scraper.Models;
 
-public class UrlsToScrape
+public class UrlToScrape
 {
     public int Id { get; set; }
     public required string Url { get; set; }

@@ -1,10 +1,21 @@
-﻿using Spectre.Console;
+﻿using product_scraper.Models;
+using product_scraper.Repositories;
+using Spectre.Console;
 
 namespace product_scraper.UI;
 
 public class Menu
 {
-    public void MainMenu()
+    private readonly UserInput userInput;
+    private readonly IRepository repository;
+
+    public Menu(UserInput userInput, IRepository repository)
+    {
+        this.userInput = userInput;
+        this.repository = repository;
+    }
+
+    public async Task MainMenuAsync()
     {
         AnsiConsole.Clear();
 
@@ -13,6 +24,7 @@ public class Menu
                 "Delete Filter",
                 "In/activate URLs",
                 "Add URL",
+                "Reset all emailed flags [CAUTION]",
                 "Exit Program",};
 
         string choice = AnsiConsole.Prompt(
@@ -31,40 +43,104 @@ public class Menu
         switch (menuSelection)
         {
             case 1:
-                HandleAddFilter();
+                await HandleAddFilterAsync();
                 break;
             case 2:
-                HandleDeleteFilter();
+                await HandleDeleteFilter();
                 break;
             case 3:
-                HandleUrlMenu();
+                await HandleUrlMenu();
                 break;
             case 4:
-                HandleAddUrl();
+                await HandleAddUrl();
                 break;
             case 5:
+                await HandleResetFlags();
+                break;
+            case 6:
                 Environment.Exit(0);
                 break;
         }
     }
 
-    private void HandleAddFilter()
+    private async Task HandleResetFlags()
     {
-        throw new NotImplementedException();
+        await repository.ResetEmailFlags();
     }
 
-    private void HandleDeleteFilter()
+    private async Task HandleAddFilterAsync()
     {
-        throw new NotImplementedException();
+        FilterCriteria? newFilter = userInput.GetNewFilter();
+        if (newFilter != null)
+        {
+            await repository.AddFilter(newFilter);
+        }
+        else
+        {
+            await WaitForUser();
+        }
+
     }
 
-    private void HandleUrlMenu()
+    private async Task HandleDeleteFilter()
     {
-        throw new NotImplementedException();
+        var filters = await repository.GetAllFilterCriteria();
+        FilterCriteria filterToDelete = userInput.GetFilterToDelete(filters);
+        if (!await repository.DeleteFilter(filterToDelete))
+        {
+            Console.WriteLine("Operation failed...");
+        }
+        else
+        {
+            AnsiConsole.WriteLine("Filter deleted!");
+            await WaitForUser();
+        }
     }
 
-    private void HandleAddUrl()
+    private async Task WaitForUser()
     {
-        throw new NotImplementedException();
+        AnsiConsole.WriteLine("Press enter to return to main menu...");
+        Console.ReadLine();
+    }
+
+    private async Task HandleUrlMenu()
+    {
+        var urls = await repository.GetAllUrls();
+        UrlToScrape selectedUrl = userInput.GetSelectedUrl(urls);
+
+        AnsiConsole.Clear();
+
+        AnsiConsole.WriteLine($"{selectedUrl.Url} is currently active: {selectedUrl.Active}");
+
+        string[] menuOptions =
+                {"Toggle active",
+                "Exit",};
+
+        string choice = AnsiConsole.Prompt(
+                            new SelectionPrompt<string>()
+                            .Title("Which operation would you like to perform? Use [green]arrow[/] and [green]enter[/] keys to make a selection.")
+                            .PageSize(10)
+                            .MoreChoicesText("Keep scrolling for more options")
+                            .AddChoices(menuOptions));
+
+        int menuSelection = Array.IndexOf(menuOptions, choice) + 1;
+
+        switch (menuSelection)
+        {
+            case 1:
+                await repository.ToggleUrlActiveStatus(selectedUrl.Id);
+                AnsiConsole.WriteLine($"URL {selectedUrl.Url} is now active: {selectedUrl.Active}");
+                await WaitForUser();
+                break;
+            case 2:
+                await WaitForUser();
+                break;
+        }
+    }
+
+    private async Task HandleAddUrl()
+    {
+        var urlToAdd = userInput.GetNewUrl();
+        await repository.AddUrl(urlToAdd);
     }
 }
