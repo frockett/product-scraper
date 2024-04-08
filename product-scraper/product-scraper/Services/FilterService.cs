@@ -5,7 +5,7 @@ using product_scraper.Repositories;
 
 namespace product_scraper.Services;
 
-public class FilterService
+public class FilterService : IFilterService
 {
     private readonly IRepository repository;
 
@@ -14,7 +14,7 @@ public class FilterService
         this.repository = repository;
     }
 
-    public async Task<List<MercariListingDto>> FilterNewListings()
+    public async Task<List<MercariListingDto>> FilterAllUnemailedListings()
     {
         List<MercariListingDto> flaggedListings = new();
 
@@ -31,8 +31,8 @@ public class FilterService
                 if (keywordsLower != null && filter.Keywords.All(keyword => item.Description.Contains(keyword, StringComparison.OrdinalIgnoreCase))
                      && item.Price >= filter.MinPrice && item.Price <= filter.MaxPrice)
                 {
-                    flaggedListings.Add(new MercariListingDto 
-                    { 
+                    flaggedListings.Add(new MercariListingDto
+                    {
                         Description = item.Description,
                         Price = item.Price,
                         Url = item.Url.StartsWith("jp.mercari.com") ? item.Url : "jp.mercari.com" + item.Url,

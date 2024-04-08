@@ -5,7 +5,7 @@ using product_scraper.Repositories;
 
 namespace product_scraper;
 
-public class ScraperService
+public class MercariScraper : IScraper
 {
     //private readonly IRepository repository;
     private readonly IServiceScopeFactory scopeFactory;
@@ -25,27 +25,27 @@ public class ScraperService
     private int repeatCount = 0;
     private int newLinkLimit = 500;
 
-    public ScraperService(IServiceScopeFactory scopeFactory)
+    public MercariScraper(IServiceScopeFactory scopeFactory)
     {
         this.scopeFactory = scopeFactory;
     }
 
     // Set up the browser and context then scrape each URL
-    public async Task StartScraping()
+    public async Task StartScraping(List<UrlsToScrape> urls)
     {
         var playwright = await Playwright.CreateAsync();
-        var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions 
-        { 
-            Headless = false, 
+        var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+        {
+            Headless = false,
             //Args = new[] { "--start-maximized" }, 
-            SlowMo = 50 
+            SlowMo = 50
         });
 
         var context = await browser.NewContextAsync(new BrowserNewContextOptions
         {
             UserAgent = GetRandomUserAgent(),
             Locale = "ja-JP",
-            ViewportSize = new ViewportSize { Height= 1080, Width = 1920 }, 
+            ViewportSize = new ViewportSize { Height = 1080, Width = 1920 },
         });
 
         await context.AddInitScriptAsync(@"Object.defineProperty(navigator, 'webdriver', {
@@ -65,13 +65,13 @@ public class ScraperService
             }
         });
 
-        List<UrlsToScrape> urls = new();
+/*        List<UrlsToScrape> urls = new();
 
         using (var scope = scopeFactory.CreateScope())
         {
             var repository = scope.ServiceProvider.GetRequiredService<IRepository>();
             urls = await repository.GetActiveUrls();
-        }
+        }*/
 
         foreach (UrlsToScrape url in urls)
         {
@@ -153,7 +153,7 @@ public class ScraperService
                     await page.Mouse.MoveAsync(new Random().Next(0, 500), new Random().Next(0, 500)); // Adjust dimensions based on expected page size
 
                     price = price.Replace(",", "");
-                    
+
                     if (uniqueLinks.Contains(link))
                     {
                         repeatCount++;
@@ -181,7 +181,7 @@ public class ScraperService
                         newUniqueLinks++;
                         repeatCount = 0;
                     }
-  
+
 
                     // Random delay between actions in ms
                     await Task.Delay(new Random().Next(500, 2000));
@@ -247,4 +247,8 @@ public class ScraperService
     }");
     }
 
+    public bool CanHandleUrl(string url)
+    {
+        return url.Contains("jp.mercari.com");
+    }
 }
