@@ -35,7 +35,7 @@ public class MercariScraper : IScraper
         var playwright = await Playwright.CreateAsync();
         var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
-            Headless = false,
+            Headless = true,
             //Args = new[] { "--start-maximized" }, 
             //SlowMo = 50
         });
@@ -63,14 +63,6 @@ public class MercariScraper : IScraper
                 Expires = DateTimeOffset.Now.AddDays(30).ToUnixTimeSeconds()
             }
         });
-
-/*        List<UrlsToScrape> urls = new();
-
-        using (var scope = scopeFactory.CreateScope())
-        {
-            var repository = scope.ServiceProvider.GetRequiredService<IRepository>();
-            urls = await repository.GetActiveUrls();
-        }*/
 
         foreach (UrlToScrape url in urls)
         {

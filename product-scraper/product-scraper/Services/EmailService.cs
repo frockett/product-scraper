@@ -47,7 +47,7 @@ public class EmailService
     private async Task SendEmailAsync(string body)
     {
         var fromAddress = new MailAddress("crockett.d.ford@gmail.com");
-        var toAddress = new MailAddress("samplekaudio@gmail.com");
+        var toAddress = new MailAddress("fionalu0420@gmail.com");
 
         var smtp = new SmtpClient
         {
