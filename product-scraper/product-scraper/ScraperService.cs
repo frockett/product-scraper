@@ -9,7 +9,6 @@ public class ScraperService
 {
     //private readonly IRepository repository;
     private readonly IServiceScopeFactory scopeFactory;
-    private List<MercariListing> listings = new List<MercariListing>();
     private HashSet<string> uniqueLinks = new HashSet<string>();
     private List<string> userAgents = new List<string>
         {
@@ -22,10 +21,9 @@ public class ScraperService
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 PTST/240304.190241",
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
         };
-    private int newUniqueLinks = 0;
-    private int repeatLimit = 3;
+    private int repeatLimit = 5;
     private int repeatCount = 0;
-    private int newLinkLimit = 600;
+    private int newLinkLimit = 500;
 
     public ScraperService(IServiceScopeFactory scopeFactory)
     {
@@ -38,7 +36,7 @@ public class ScraperService
         var playwright = await Playwright.CreateAsync();
         var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions 
         { 
-            Headless = true, 
+            Headless = false, 
             //Args = new[] { "--start-maximized" }, 
             SlowMo = 50 
         });
@@ -99,7 +97,9 @@ public class ScraperService
 
     public async Task ScrapeSite(IBrowserContext context, IRepository repository, string url)
     {
-        var oldListings = await repository.GetAllListings();
+        List<MercariListing> listings = new List<MercariListing>(); // Instatiate list here so its fresh each time
+        var oldListings = await repository.GetAllListings(); // Put old items into Hashset 
+        int newUniqueLinks = 0; // Start the counter for new unique links
 
         foreach (var listing in oldListings)
         {
