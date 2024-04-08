@@ -74,6 +74,30 @@ public class SqliteRepository : IRepository
         return listings;
     }
 
+    public async Task<List<MercariListing>> GetUnemailedListings()
+    {
+        return await context.MercariListings.Where(l => !l.IsEmailed).ToListAsync();
+    }
+
+    public async Task MarkListingsAsEmailed(List<int> listingIds)
+    {
+        try
+        {
+            var listingsToUpdate = await context.MercariListings.Where(l => listingIds.Contains(l.Id)).ToListAsync();
+
+            foreach (var listing in listingsToUpdate)
+            {
+                listing.IsEmailed = true;
+            }
+
+            await context.SaveChangesAsync();
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
     public async Task RemoveOldListings()
     {
         // ATTN! CURRENTLY DELETES ALL FOR TESTING PURPOSES! FIX LATER!!
@@ -81,5 +105,11 @@ public class SqliteRepository : IRepository
         context.MercariListings.RemoveRange(listings);
         await context.SaveChangesAsync();
         Console.WriteLine("Deleted!");
+    }
+
+    public async Task<List<FilterCriteria>> GetAllFilterCriteria()
+    {
+        var filterCriteria = await context.FilterCriteria.ToListAsync();
+        return filterCriteria;
     }
 }

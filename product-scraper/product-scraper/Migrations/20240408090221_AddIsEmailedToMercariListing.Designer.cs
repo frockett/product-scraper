@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using product_scraper.Data;
 
@@ -10,9 +11,11 @@ using product_scraper.Data;
 namespace product_scraper.Migrations
 {
     [DbContext(typeof(ScraperContext))]
-    partial class ScraperContextModelSnapshot : ModelSnapshot
+    [Migration("20240408090221_AddIsEmailedToMercariListing")]
+    partial class AddIsEmailedToMercariListing
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.3");
@@ -66,24 +69,6 @@ namespace product_scraper.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("MercariListings");
-                });
-
-            modelBuilder.Entity("product_scraper.Models.UrlsToScrape", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("Active")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Urls");
                 });
 #pragma warning restore 612, 618
         }

@@ -8,6 +8,9 @@ public interface IRepository
     public Task RemoveOldListings();
     public Task<MercariListing> FetchMostRecentListing();
     public Task<List<MercariListing>> GetAllListings();
+    public Task<List<MercariListing>> GetUnemailedListings();
+    public Task MarkListingsAsEmailed(List<int> listingIds);
     public Task<FilterCriteria> AddFilter(FilterCriteria filter);
     public Task<bool> DeleteFilter(FilterCriteria filter);
+    public Task<List<FilterCriteria>> GetAllFilterCriteria();
 }

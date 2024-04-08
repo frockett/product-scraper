@@ -11,5 +11,5 @@ public class ScraperContext : DbContext
 
     public virtual DbSet<MercariListing> MercariListings { get; set; }
     public virtual DbSet<FilterCriteria> FilterCriteria { get; set; }
-
+    public virtual DbSet<UrlsToScrape> Urls { get; set;}
 }

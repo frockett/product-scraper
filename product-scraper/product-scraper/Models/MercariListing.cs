@@ -13,4 +13,5 @@ public class MercariListing
     public required string Url { get; set; }
     public string? ImgUrl { get; set; }
     public DateTime CreatedAt { get; private set; }
+    public bool IsEmailed { get; set; } = false;
 }
