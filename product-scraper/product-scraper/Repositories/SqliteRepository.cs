@@ -73,6 +73,14 @@ public class SqliteRepository : IRepository
 
         return listings;
     }
+    public async Task<List<UrlsToScrape>> GetActiveUrls()
+    {
+        return await context.Urls.Where(u => u.Active == true).ToListAsync();  
+    }
+    public async Task<List<UrlsToScrape>> GetAllUrls()
+    {
+        return await context.Urls.ToListAsync();
+    }
 
     public async Task<List<MercariListing>> GetUnemailedListings()
     {

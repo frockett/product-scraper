@@ -65,22 +65,20 @@ public class ScraperService
             }
         });
 
-        List<string> urls = new List<string> 
-        {   "https://jp.mercari.com/search?order=desc&sort=created_time&category_id=20",
-            "https://jp.mercari.com/search?keyword=balenciaga&sort=created_time&order=desc&category_id=20",
-            "https://jp.mercari.com/search?keyword=hermes&sort=created_time&order=desc&category_id=20",
-            "https://jp.mercari.com/search?keyword=gaultier&sort=created_time&order=desc&category_id=20" ,
-            "https://jp.mercari.com/search?keyword=chanel&sort=created_time&order=desc&category_id=20",
-            "https://jp.mercari.com/search?keyword=prada&sort=created_time&order=desc&category_id=20" ,
-            "https://jp.mercari.com/search?keyword=dior&sort=created_time&order=desc&category_id=20" 
-        };
+        List<UrlsToScrape> urls = new();
 
-        foreach (string url in urls)
+        using (var scope = scopeFactory.CreateScope())
+        {
+            var repository = scope.ServiceProvider.GetRequiredService<IRepository>();
+            urls = await repository.GetActiveUrls();
+        }
+
+        foreach (UrlsToScrape url in urls)
         {
             using (var scope = scopeFactory.CreateScope())
             {
                 var repository = scope.ServiceProvider.GetRequiredService<IRepository>();
-                await ScrapeSite(context, repository, url);
+                await ScrapeSite(context, repository, url.Url);
             }
         }
 
@@ -97,13 +95,13 @@ public class ScraperService
 
     public async Task ScrapeSite(IBrowserContext context, IRepository repository, string url)
     {
-        List<MercariListing> listings = new List<MercariListing>(); // Instatiate list here so its fresh each time
-        var oldListings = await repository.GetAllListings(); // Put old items into Hashset 
+        List<MercariListing> listings = new List<MercariListing>(); // Instatiate new list here so its fresh each time
+        var oldListings = await repository.GetAllListings(); // Put old items into list
         int newUniqueLinks = 0; // Start the counter for new unique links
 
         foreach (var listing in oldListings)
         {
-            uniqueLinks.Add(listing.Url);
+            uniqueLinks.Add(listing.Url); // Put each old database item into the hashset
         }
 
         // Do the scraping
