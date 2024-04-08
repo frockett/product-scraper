@@ -11,25 +11,20 @@ Console.OutputEncoding = System.Text.Encoding.UTF8;
 
 
 
-var builder = Host.CreateApplicationBuilder();
+//var builder = Host.CreateApplicationBuilder();
 
-var config = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .Build();
 
-builder.Services.AddDbContext<ScraperContext>(options =>
-{
-    options.UseSqlite(config.GetConnectionString("DefaultConnection"));
-});
+var builder = Host.CreateDefaultBuilder(args)
+    .ConfigureServices((context, services) =>
+    {
+        services.AddDbContext<ScraperContext>(options =>
+            options.UseSqlite(context.Configuration.GetConnectionString("DefaultConnection")));
+        services.AddScoped<IRepository, SqliteRepository>();
+        services.AddScoped<ScraperService>();
+    });
 
-builder.Services.AddScoped<IRepository, SqliteRepository>();
-builder.Services.AddScoped<ScraperService>();
 
 
 var app = builder.Build();
 
-var scope = app.Services.CreateScope();
-
-var scraper = app.Services.GetRequiredService<ScraperService>();
-
-await scraper.StartScraping();
+await app.Services.GetRequiredService<ScraperService>().StartScraping();

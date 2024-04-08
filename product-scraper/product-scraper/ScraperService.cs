@@ -1,4 +1,5 @@
-﻿using Microsoft.Playwright;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Playwright;
 using product_scraper.Models;
 using product_scraper.Repositories;
 
@@ -6,7 +7,8 @@ namespace product_scraper;
 
 public class ScraperService
 {
-    private readonly IRepository repository;
+    //private readonly IRepository repository;
+    private readonly IServiceScopeFactory scopeFactory;
     private List<MercariListing> listings = new List<MercariListing>();
     private HashSet<string> uniqueLinks = new HashSet<string>();
     private List<string> userAgents = new List<string>
@@ -25,9 +27,9 @@ public class ScraperService
     private int repeatCount = 0;
     private int newLinkLimit = 600;
 
-    public ScraperService(IRepository repository)
+    public ScraperService(IServiceScopeFactory scopeFactory)
     {
-        this.repository = repository;
+        this.scopeFactory = scopeFactory;
     }
 
     // Set up the browser and context then scrape each URL
@@ -77,7 +79,11 @@ public class ScraperService
 
         foreach (string url in urls)
         {
-            await ScrapeSite(context, url);
+            using (var scope = scopeFactory.CreateScope())
+            {
+                var repository = scope.ServiceProvider.GetRequiredService<IRepository>();
+                await ScrapeSite(context, repository, url);
+            }
         }
 
         await browser.CloseAsync();
@@ -91,7 +97,7 @@ public class ScraperService
         return userAgents[index];
     }
 
-    public async Task ScrapeSite(IBrowserContext context, string url)
+    public async Task ScrapeSite(IBrowserContext context, IRepository repository, string url)
     {
         var oldListings = await repository.GetAllListings();
 
