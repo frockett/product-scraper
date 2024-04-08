@@ -9,42 +9,49 @@ public class ScraperService
     private readonly IRepository repository;
     private List<MercariListing> listings = new List<MercariListing>();
     private HashSet<string> uniqueLinks = new HashSet<string>();
+    private List<string> userAgents = new List<string>
+        {
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Chrome/123.0.0.0 Version/11.1.1 Safari/605.1.15",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6903.32 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.02",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 GLS/100.10.9571.96",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 PTST/240304.190241",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+        };
     private int newUniqueLinks = 0;
-    private int repeatThreshold = 3;
+    private int repeatLimit = 3;
     private int repeatCount = 0;
+    private int newLinkLimit = 600;
 
     public ScraperService(IRepository repository)
     {
         this.repository = repository;
     }
 
+    // Set up the browser and context then scrape each URL
     public async Task StartScraping()
     {
-        List<string> Urls = new List<string> { "https://jp.mercari.com/search?order=desc&sort=created_time&category_id=20",
-                                               "https://jp.mercari.com/search?keyword=balenciaga&sort=created_time&order=desc&category_id=20",
-                                               "https://jp.mercari.com/search?keyword=hermes&sort=created_time&order=desc&category_id=20",
-                                               "https://jp.mercari.com/search?keyword=gaultier&sort=created_time&order=desc&category_id=20" ,
-                                               "https://jp.mercari.com/search?keyword=chanel&sort=created_time&order=desc&category_id=20",
-                                               "https://jp.mercari.com/search?keyword=prada&sort=created_time&order=desc&category_id=20" ,
-                                               "https://jp.mercari.com/search?keyword=dior&sort=created_time&order=desc&category_id=20" };
-
-
-
-        foreach (string Url in Urls)
-        {
-            await ScrapeSite(Url);
-        }
-    }
-
-    public async Task ScrapeSite(string Url)
-    {
         var playwright = await Playwright.CreateAsync();
-        var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false, Args = new[] { "--start-maximized" }, SlowMo = 50 });
+        var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions 
+        { 
+            Headless = true, 
+            //Args = new[] { "--start-maximized" }, 
+            SlowMo = 50 
+        });
+
         var context = await browser.NewContextAsync(new BrowserNewContextOptions
         {
-            UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-            Locale = "ja-JP"
+            UserAgent = GetRandomUserAgent(),
+            Locale = "ja-JP",
+            ViewportSize = new ViewportSize { Height= 1080, Width = 1920 }, 
         });
+
+        await context.AddInitScriptAsync(@"Object.defineProperty(navigator, 'webdriver', {
+                                        get: () => undefined,
+                                        });");
+
 
         await context.AddCookiesAsync(new[]
         {
@@ -58,6 +65,34 @@ public class ScraperService
             }
         });
 
+        List<string> urls = new List<string> 
+        {   "https://jp.mercari.com/search?order=desc&sort=created_time&category_id=20",
+            "https://jp.mercari.com/search?keyword=balenciaga&sort=created_time&order=desc&category_id=20",
+            "https://jp.mercari.com/search?keyword=hermes&sort=created_time&order=desc&category_id=20",
+            "https://jp.mercari.com/search?keyword=gaultier&sort=created_time&order=desc&category_id=20" ,
+            "https://jp.mercari.com/search?keyword=chanel&sort=created_time&order=desc&category_id=20",
+            "https://jp.mercari.com/search?keyword=prada&sort=created_time&order=desc&category_id=20" ,
+            "https://jp.mercari.com/search?keyword=dior&sort=created_time&order=desc&category_id=20" 
+        };
+
+        foreach (string url in urls)
+        {
+            await ScrapeSite(context, url);
+        }
+
+        await browser.CloseAsync();
+    }
+
+    // Get a random user agent from the list
+    private string GetRandomUserAgent()
+    {
+        Random random = new Random();
+        int index = random.Next(userAgents.Count);
+        return userAgents[index];
+    }
+
+    public async Task ScrapeSite(IBrowserContext context, string url)
+    {
         var oldListings = await repository.GetAllListings();
 
         foreach (var listing in oldListings)
@@ -69,7 +104,7 @@ public class ScraperService
         try
         {
             var page = await context.NewPageAsync();
-            await page.GotoAsync("https://jp.mercari.com/search?order=desc&sort=created_time&category_id=20");
+            await page.GotoAsync(url);
 
             do
             {
@@ -98,8 +133,11 @@ public class ScraperService
                     var linkElement = await item.QuerySelectorAsync("a[data-location='search_result:newest:body:item_list:item_thumbnail']");
                     string? link = await linkElement?.GetAttributeAsync("href");
 
+                    var imgElement = await item.QuerySelectorAsync("img");
+                    string? imgUrl = await imgElement?.GetAttributeAsync("src");
+
                     // Write to console during development
-                    Console.WriteLine($"Description: {description}, Price: {price}, Link: {link}");
+                    Console.WriteLine($"Description: {description}, Price: {price}, Link: {link}, ImgSrce: {imgUrl}");
 
                     // Randomly move the mouse around
                     var boundingBox = await item.BoundingBoxAsync();
@@ -116,7 +154,7 @@ public class ScraperService
                     {
                         repeatCount++;
                         Console.WriteLine($"Current repeats: {repeatCount}");
-                        if (repeatCount >= repeatThreshold) break;
+                        if (repeatCount >= repeatLimit) break;
                     }
                     else
                     {
@@ -144,7 +182,7 @@ public class ScraperService
 
                 // Go to the next page
                 var nextButton = await page.QuerySelectorAsync("[data-testid='pagination-next-button']");
-                if (nextButton != null && repeatCount < repeatThreshold)
+                if (nextButton != null && repeatCount < repeatLimit)
                 {
                     await Task.Delay(new Random().Next(500, 2000));
                     await nextButton.ClickAsync();
@@ -155,10 +193,8 @@ public class ScraperService
                     break;
                 }
 
-            } while (repeatCount < repeatThreshold && newUniqueLinks < 700); // 700 is an arbitrary limit, about 7 pages
-
-
-            await browser.CloseAsync();
+                // Keep going until you either find several repeats in a row or you've scraped the limit for that time.
+            } while (repeatCount < repeatLimit && newUniqueLinks < newLinkLimit);
 
             await repository.AddListings(listings);
         }
@@ -174,15 +210,6 @@ public class ScraperService
 
             Console.WriteLine($"An error occurred: {ex.Message}");
         }
-        finally
-        {
-            if (browser != null)
-            {
-                await browser.CloseAsync();
-            }
-        }
-
-        Console.Write($"Finished scraping, found {uniqueLinks.Count} unique links!");
     }
 
     private async Task ScrollToEnd(IPage page)

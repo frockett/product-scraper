@@ -11,6 +11,6 @@ public class MercariListing
     public required string Description { get; set; }
     public int Price { get; set; }
     public required string Url { get; set; }
-    public string? imgUrl { get; set; }
+    public string? ImgUrl { get; set; }
     public DateTime CreatedAt { get; private set; }
 }
