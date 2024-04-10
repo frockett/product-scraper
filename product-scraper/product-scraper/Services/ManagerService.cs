@@ -32,7 +32,7 @@ public class ManagerService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error during scraping: {ex.Message}");
+            Console.WriteLine($"Error during scraping: {ex.Message} \n {ex.StackTrace}");
         }
 
         List<MercariListingDto> flaggedListings = new();
@@ -43,7 +43,7 @@ public class ManagerService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error during filtering: {ex.Message}");
+            Console.WriteLine($"Error during filtering: {ex.Message} \n {ex.StackTrace}");
         }
 
         try
@@ -58,7 +58,7 @@ public class ManagerService
         }
         catch(Exception ex)
         {
-            Console.WriteLine($"Error during email creation/sending: {ex.Message}");
+            Console.WriteLine($"Error during email creation/sending: {ex.Message} \n {ex.StackTrace}");
         }
     }
 }
