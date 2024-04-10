@@ -55,7 +55,6 @@ public class EmailService
         {
             addresses.Add(new MailAddress(recipient.Email));
         }
-        var toAddress = new MailAddress("fionalu0420@gmail.com");
 
         var smtp = new SmtpClient
         {
@@ -73,7 +72,7 @@ public class EmailService
             {
                 using (var message = new MailMessage(fromAddress, address)
                 {
-                    Subject = $"{DateTime.UtcNow:yyyy/MM/dd HH:mm} bag update",
+                    Subject = $"{TimeZoneInfo.ConvertTime(DateTime.Now, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time")):yyyy/MM/dd HH:mm} update",
                     Body = body,
                     IsBodyHtml = true
 

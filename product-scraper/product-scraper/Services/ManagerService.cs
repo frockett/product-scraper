@@ -33,6 +33,7 @@ public class ManagerService
         catch (Exception ex)
         {
             Console.WriteLine($"Error during scraping: {ex.Message} \n {ex.StackTrace}");
+            return;
         }
 
         List<MercariListingDto> flaggedListings = new();
