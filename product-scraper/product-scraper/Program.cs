@@ -45,9 +45,7 @@ if (args.Length > 0 && args[0] == "menu")
 }
 else
 {
-    await app.Services.GetRequiredService<ScraperService>().StartScraping();
-    // TODO decouple this from the emailservice, because currently it's all chained together.
-    await app.Services.GetRequiredService<IFilterService>().FilterAllUnemailedListings();
+    await app.Services.GetRequiredService<ManagerService>().Run();
 }
 
 

@@ -1,4 +1,5 @@
-﻿using product_scraper.Models;
+﻿using product_scraper.Dtos;
+using product_scraper.Models;
 using product_scraper.Repositories;
 using System;
 using System.Collections.Generic;
@@ -25,14 +26,39 @@ public class ManagerService
 
     public async Task Run()
     {
-        await scraperService.StartScraping();
-        var flaggedListings = await filterService.FilterAllUnemailedListings();
-        string emailBody = await emailService.GenerateEmailHtml(flaggedListings);
-        List<User>? users = await repository.GetAllUsers();
-        if (users != null && users.Count != 0)
+        try
         {
-            await emailService.SendEmailAsync(emailBody, users);
+            await scraperService.StartScraping();
         }
-        else return;
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during scraping: {ex.Message}");
+        }
+
+        List<MercariListingDto> flaggedListings = new();
+
+        try
+        {
+            flaggedListings = await filterService.FilterAllUnemailedListings();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during filtering: {ex.Message}");
+        }
+
+        try
+        {
+            string emailBody = await emailService.GenerateEmailHtml(flaggedListings);
+            List<User>? users = await repository.GetAllUsers();
+            if (users != null && users.Count != 0)
+            {
+                await emailService.SendEmailAsync(emailBody, users);
+            }
+            else return;
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine($"Error during email creation/sending: {ex.Message}");
+        }
     }
 }
