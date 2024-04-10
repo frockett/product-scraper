@@ -18,4 +18,5 @@ public interface IRepository
     public Task<bool> DeleteFilter(FilterCriteria filter);
     public Task<List<FilterCriteria>> GetAllFilterCriteria();
     public Task ResetEmailFlags();
+    public Task<List<User>>? GetAllUsers();
 }

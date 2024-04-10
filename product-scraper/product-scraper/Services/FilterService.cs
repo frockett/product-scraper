@@ -47,13 +47,9 @@ public class FilterService : IFilterService
             }
 
         }
-
         // Flag them as emailed in the database.
         await repository.MarkListingsAsEmailed(flaggedIds);
 
-
-        // Generate the HTML for the email
-        await emailService.GenerateEmailHtml(flaggedListings);
         return flaggedListings;
     }
 }

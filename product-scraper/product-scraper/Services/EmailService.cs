@@ -3,6 +3,7 @@ using System.Net.Mail;
 using System.Net;
 using product_scraper.Dtos;
 using System.Text;
+using product_scraper.Models;
 
 namespace product_scraper.Services;
 
@@ -10,7 +11,7 @@ public class EmailService
 {
     private readonly string? emailPassword = Environment.GetEnvironmentVariable("EmailSettings__AppPassword");
 
-    public async Task GenerateEmailHtml(List<MercariListingDto> listings)
+    public async Task<string> GenerateEmailHtml(List<MercariListingDto> listings)
     {
         StringBuilder sb = new StringBuilder();
 
@@ -41,12 +42,19 @@ public class EmailService
         sb.Append("</body>");
         sb.Append("</html>");
 
-        await SendEmailAsync(sb.ToString());
+        return sb.ToString();
     }
 
-    private async Task SendEmailAsync(string body)
+    public async Task SendEmailAsync(string body, List<User> recipients)
     {
         var fromAddress = new MailAddress("crockett.d.ford@gmail.com");
+
+        List<MailAddress> addresses = new();
+
+        foreach (var recipient in recipients)
+        {
+            addresses.Add(new MailAddress(recipient.Email));
+        }
         var toAddress = new MailAddress("fionalu0420@gmail.com");
 
         var smtp = new SmtpClient
@@ -59,23 +67,28 @@ public class EmailService
             Credentials = new NetworkCredential(fromAddress.Address, emailPassword)
         };
 
-        try
+        foreach (var address in addresses)
         {
-            using (var message = new MailMessage(fromAddress, toAddress)
+            try
             {
-                Subject = $"{DateTime.UtcNow:yyyy/MM/dd HH} o' clock link update",
-                Body = body,
-                IsBodyHtml = true
+                using (var message = new MailMessage(fromAddress, address)
+                {
+                    Subject = $"{DateTime.UtcNow:yyyy/MM/dd HH:mm} bag update",
+                    Body = body,
+                    IsBodyHtml = true
 
-            })
+                })
+                {
+                    await smtp.SendMailAsync(message);
+                }
+            }
+            catch (Exception ex)
             {
-                await smtp.SendMailAsync(message);
+                Console.WriteLine($"The email to {address.User} at {address.Address} could not be sent.");
+                Console.WriteLine(ex.ToString());
             }
         }
-        catch(Exception ex)
-        {
-            Console.WriteLine(ex.ToString());
-        }
+
     }
 
 

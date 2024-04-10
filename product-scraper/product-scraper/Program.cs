@@ -22,6 +22,7 @@ var builder = Host.CreateDefaultBuilder(args)
         services.AddSingleton<IScraperFactory, ScraperFactory>();
 
         // Service that manages scrapers
+        services.AddScoped<ManagerService>();
         services.AddScoped<ScraperService>();
 
         // CLI menu arguments

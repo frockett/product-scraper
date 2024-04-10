@@ -43,6 +43,7 @@ public class SqliteRepository : IRepository
         try
         {
             await context.Urls.AddAsync(url);
+            await context.SaveChangesAsync();
         }
         catch (Exception ex)
         {
@@ -162,6 +163,20 @@ public class SqliteRepository : IRepository
         catch(Exception ex)
         {
             Console.WriteLine($"Database operation failed. {ex.Message}");
+        }
+    }
+
+    public Task<List<User>>? GetAllUsers()
+    {
+        try
+        {
+            var users = context.Users.ToListAsync();
+            return users;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return null;
         }
     }
 }

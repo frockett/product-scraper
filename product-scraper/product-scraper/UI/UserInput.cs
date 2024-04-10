@@ -72,6 +72,7 @@ public class UserInput
         AnsiConsole.Clear();
         var options = new SelectionPrompt<FilterCriteria>();
         options.AddChoices(currentFilters);
+        options.UseConverter(currentFilters => $"{String.Join(", ", currentFilters.Keywords)} -- Price range: {currentFilters.MinPrice} - {currentFilters.MaxPrice}");
 
         FilterCriteria filterToDelete = AnsiConsole.Prompt(options);
         return filterToDelete;
@@ -82,6 +83,7 @@ public class UserInput
         AnsiConsole.Clear();
         var options = new SelectionPrompt<UrlToScrape>();
         options.AddChoices(urls);
+        options.UseConverter(urls => $"{urls.Url} || Active: {urls.Active}");
 
         UrlToScrape selectedUrl = AnsiConsole.Prompt(options);
         return selectedUrl;
@@ -89,8 +91,7 @@ public class UserInput
 
     private bool IsValidUrl(string url)
     {
-        bool result = Uri.TryCreate(url, UriKind.Absolute, out Uri? uriResult)
-            && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+        bool result = Uri.TryCreate(url, UriKind.Absolute, out Uri? uriResult) && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
         return result;
     }
 

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using product_scraper.Data;
 
@@ -10,9 +11,11 @@ using product_scraper.Data;
 namespace product_scraper.Migrations
 {
     [DbContext(typeof(ScraperContext))]
-    partial class ScraperContextModelSnapshot : ModelSnapshot
+    [Migration("20240410031356_AddUserTable--FixedDbContext")]
+    partial class AddUserTableFixedDbContext
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.3");

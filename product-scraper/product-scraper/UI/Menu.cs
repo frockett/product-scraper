@@ -78,28 +78,41 @@ public class Menu
         {
             await WaitForUser();
         }
-
+        await WaitForUser();
     }
 
     private async Task HandleDeleteFilter()
     {
         var filters = await repository.GetAllFilterCriteria();
         FilterCriteria filterToDelete = userInput.GetFilterToDelete(filters);
-        if (!await repository.DeleteFilter(filterToDelete))
+
+        bool deleteConfired = AnsiConsole.Confirm($"Are you sure you want to delete filter with keywords {String.Join(", ", filterToDelete.Keywords)} and price range {filterToDelete.MinPrice} - {filterToDelete.MaxPrice}?");
+
+        if (deleteConfired)
         {
-            Console.WriteLine("Operation failed...");
+            try
+            {
+                await repository.DeleteFilter(filterToDelete);
+                AnsiConsole.WriteLine("Filter deleted!");
+            }
+            catch (Exception ex)
+            {
+                AnsiConsole.WriteLine($"An error occured deleting the filter: {ex.Message}");
+            }
         }
         else
         {
-            AnsiConsole.WriteLine("Filter deleted!");
-            await WaitForUser();
+            AnsiConsole.WriteLine("Okay! Filter will not be deleted");
         }
+
+        await WaitForUser();
     }
 
     private async Task WaitForUser()
     {
         AnsiConsole.WriteLine("Press enter to return to main menu...");
         Console.ReadLine();
+        await MainMenuAsync();
     }
 
     private async Task HandleUrlMenu()
@@ -139,7 +152,23 @@ public class Menu
 
     private async Task HandleAddUrl()
     {
-        var urlToAdd = userInput.GetNewUrl();
-        await repository.AddUrl(urlToAdd);
+        UrlToScrape? urlToAdd = userInput.GetNewUrl();
+
+        try
+        {
+            if (urlToAdd != null)
+            {
+                await repository.AddUrl(urlToAdd);
+            }
+            else
+            {
+                await WaitForUser();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        await WaitForUser();
     }
 }
