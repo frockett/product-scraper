@@ -132,8 +132,10 @@ public class MercariScraper : IScraper
                     var imgElement = await item.QuerySelectorAsync("img");
                     string? imgUrl = await imgElement?.GetAttributeAsync("src");
 
-                    // Write to console during development
-                    Console.WriteLine($"Description: {description}, Price: {price}, Link: {link}, ImgSrce: {imgUrl}");
+                    /* Write to console during development ATTN: uncomment for development to watch the scraper work.
+                     * Currently commented out because it makes the logs massive. */
+
+                    // Console.WriteLine($"Description: {description}, Price: {price}, Link: {link}, ImgSrce: {imgUrl}");
 
                     // Randomly move the mouse around
                     var boundingBox = await item.BoundingBoxAsync();
@@ -186,9 +188,14 @@ public class MercariScraper : IScraper
                     await Task.Delay(new Random().Next(500, 2000));
                     await nextButton.ClickAsync();
                 }
-                else
+                else if (nextButton == null)
                 {
                     Console.WriteLine("No next button found!");
+                    break;
+                }
+                else if (repeatCount >= repeatLimit)
+                {
+                    Console.WriteLine($"Repeat limit of {repeatLimit} has been met!");
                     break;
                 }
 
