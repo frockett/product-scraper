@@ -35,8 +35,8 @@ public class MercariScraper : IScraper
         var playwright = await Playwright.CreateAsync();
         var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
-            Headless = true,
-            //Args = new[] { "--start-maximized" }, 
+            Headless = false,
+            Args = new[] { "--start-maximized" }, 
             //SlowMo = 50
         });
 
@@ -110,15 +110,28 @@ public class MercariScraper : IScraper
                 // Scroll to end of page to load all listings
                 await Task.Delay(new Random().Next(500, 1500));
                 Console.WriteLine("I've waited! Now I'm going to scroll!");
-                await ScrollToEnd(page);
+
+                try
+                {
+                    await ScrollToEnd(page);
+                }
+                catch (TimeoutException ex)
+                {
+                    Console.WriteLine($"An exception occurred during scrolling: {ex.Message}");
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"An exception occurred during scrolling: {ex.Message}");
+                    break;
+                }
+ 
                 Console.WriteLine("I finished scrolling!");
 
 
                 var items = await page.QuerySelectorAllAsync("li[data-testid='item-cell']");
                 foreach (var item in items)
                 {
-                    // TODO get the image URL
-
                     // Cache all of the tags that have desired information
                     var imageContainer = await item.QuerySelectorAsync(".imageContainer__f8ddf3a2");
                     string? description = await imageContainer?.GetAttributeAsync("aria-label");
@@ -221,30 +234,53 @@ public class MercariScraper : IScraper
 
     private async Task ScrollToEnd(IPage page)
     {
-        await page.EvaluateAsync(@"async () => {
-        await new Promise((resolve, reject) => {
-            var totalHeight = 0;
-            var distance = 100;
-            var scrollUpEvery = 5; // Scroll up every 5 scrolls
-            var scrollCount = 0;
-            var timer = setInterval(() => {
-                // Introduce some randomness in scroll distance
-                var randDistance = distance + Math.floor(Math.random() * 100) - 50;
-                if (scrollCount % scrollUpEvery === 4) {
-                    // Occasionally scroll up a bit
-                    window.scrollBy(0, -randDistance);
-                } else {
-                    window.scrollBy(0, randDistance);
-                    totalHeight += randDistance;
-                }
-                scrollCount++;
-                if(totalHeight >= document.body.scrollHeight){
-                    clearInterval(timer);
-                    resolve();
-                }
-            }, 100 + Math.random() * 200); // Randomize interval as well
-        });
-    }");
+        try
+        {
+            var jsScript = @"async () => {
+                return new Promise((resolve, reject) => {
+                    var totalHeight = 0;
+                    var distance = 100;
+                    var scrollUpEvery = 5; // Scroll up every 5 scrolls
+                    var scrollCount = 0;
+                    var timer = setInterval(() => {
+                        var randDistance = distance + Math.floor(Math.random() * 100) - 50;
+                        if (scrollCount % scrollUpEvery === 4) {
+                            window.scrollBy(0, -randDistance);
+                        } else {
+                            window.scrollBy(0, randDistance);
+                            totalHeight += randDistance;
+                        }
+                        scrollCount++;
+                        if(totalHeight >= document.body.scrollHeight){
+                            clearInterval(timer);
+                            resolve();
+                        }
+                    }, 100 + Math.random() * 200); // Randomize interval as well
+                });
+            }"; 
+
+            var scrollingTask = page.EvaluateAsync(jsScript);
+            if (await Task.WhenAny(scrollingTask, Task.Delay(120000)) == scrollingTask)
+            {
+                await scrollingTask;
+            }
+            else
+            {
+                Console.WriteLine("Scrolling operation timed out.");
+                throw new TimeoutException("The scrolling operation timed out.");
+            }
+        }
+        catch (TimeoutException ex)
+        {
+            // Pass the exception up to the call site
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception during scrolling: {ex.Message}");
+            throw;
+        }
+
     }
 
     public bool CanHandleUrl(string url)
