@@ -241,7 +241,7 @@ public class SqliteRepository : IRepository
     {
         try
         {
-            DateTime cutoffDate = DateTime.UtcNow.AddDays(-20);
+            DateTime cutoffDate = DateTime.UtcNow.AddDays(-30);
             var oldListings = await context.MercariListings.Where(x => x.CreatedAt <= cutoffDate).ToListAsync();
             context.MercariListings.RemoveRange(oldListings);
             await context.SaveChangesAsync();

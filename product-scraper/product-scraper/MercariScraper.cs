@@ -35,8 +35,8 @@ public class MercariScraper : IScraper
         var playwright = await Playwright.CreateAsync();
         var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
-            Headless = false,
-            Args = new[] { "--start-maximized" }, 
+            Headless = true,
+            //Args = new[] { "--start-maximized" }, 
             //SlowMo = 50
         });
 
