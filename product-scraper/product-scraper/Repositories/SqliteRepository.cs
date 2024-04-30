@@ -152,7 +152,7 @@ public class SqliteRepository : IRepository
 
     public async Task<List<MercariListing>> GetRecentUnemailedListings()
     {
-        var timeOffset = DateTime.UtcNow.AddHours(-6);
+        var timeOffset = DateTime.UtcNow.AddHours(-1); // Arbitrary magic number, adjust as needed, 1 hour seems like it'll always get the new listings and keep the read small
         return await context.MercariListings
                             .Where(l => !l.IsEmailed && l.CreatedAt >= timeOffset).ToListAsync();
     }
