@@ -209,18 +209,15 @@ public class MercariScraper : IScraper
 
             await repository.AddListings(listings);
             await page.CloseAsync();
+            Console.WriteLine($"{listings.Count} listings saved.");
         }
         catch (Exception ex)
         {
             var logDirectory = "logs";
             var logFilePath = Path.Combine(logDirectory, "error_log.txt");
             var logMessage = $"Error occurred at {DateTime.UtcNow}: {ex.Message}\nStack Trace: {ex.StackTrace}\n";
-
             Directory.CreateDirectory(logDirectory);
-
             await File.AppendAllTextAsync(logFilePath, logMessage);
-
-            Console.WriteLine($"An error occurred: {ex.Message}");
         }
     }
 
