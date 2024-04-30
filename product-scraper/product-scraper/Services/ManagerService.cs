@@ -1,11 +1,6 @@
 ﻿using product_scraper.Dtos;
 using product_scraper.Models;
 using product_scraper.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace product_scraper.Services;
 
@@ -60,6 +55,15 @@ public class ManagerService
         catch(Exception ex)
         {
             Console.WriteLine($"Error during email creation/sending: {ex.Message} \n {ex.StackTrace}");
+        }
+
+        try
+        {
+            await repository.DeleteOldListings();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during DB clean-up: {ex.Message} \n {ex.StackTrace}");
         }
     }
 }

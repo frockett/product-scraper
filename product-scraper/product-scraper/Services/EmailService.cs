@@ -1,5 +1,4 @@
-﻿
-using System.Net.Mail;
+﻿using System.Net.Mail;
 using System.Net;
 using product_scraper.Dtos;
 using System.Text;
