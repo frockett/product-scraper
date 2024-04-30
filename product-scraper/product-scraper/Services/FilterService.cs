@@ -21,7 +21,7 @@ public class FilterService : IFilterService
         List<MercariListingDto> flaggedListings = new();
         List<int> flaggedIds = new();
 
-        var allListings = await repository.GetUnemailedListings();
+        var allListings = await repository.GetRecentUnemailedListings();
         var filters = await repository.GetAllFilterCriteria();
 
         foreach (var item in allListings)

@@ -150,9 +150,11 @@ public class SqliteRepository : IRepository
         return await context.Urls.ToListAsync();
     }
 
-    public async Task<List<MercariListing>> GetUnemailedListings()
+    public async Task<List<MercariListing>> GetRecentUnemailedListings()
     {
-        return await context.MercariListings.Where(l => !l.IsEmailed).ToListAsync();
+        var timeOffset = DateTime.UtcNow.AddHours(-6);
+        return await context.MercariListings
+                            .Where(l => !l.IsEmailed && l.CreatedAt >= timeOffset).ToListAsync();
     }
 
     public async Task ToggleUrlActiveStatus(int urlId)

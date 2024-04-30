@@ -14,7 +14,7 @@ public interface IRepository
     public string ComputeSha256Hash(string rawUrl);
     public Task<List<UrlToScrape>> GetActiveUrls();
     public Task<List<UrlToScrape>> GetAllUrls();
-    public Task<List<MercariListing>> GetUnemailedListings();
+    public Task<List<MercariListing>> GetRecentUnemailedListings();
     public Task MarkListingsAsEmailed(List<int> listingIds);
     public Task ToggleUrlActiveStatus(int urlId);
     public Task<FilterCriteria> AddFilter(FilterCriteria filter);

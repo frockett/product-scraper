@@ -69,6 +69,7 @@ public class MercariScraper : IScraper
             using (var scope = scopeFactory.CreateScope())
             {
                 var repository = scope.ServiceProvider.GetRequiredService<IRepository>();
+                Console.WriteLine($"Navigating to {url.Url}");
                 await ScrapeSite(context, repository, url.Url);
             }
         }
@@ -142,11 +143,6 @@ public class MercariScraper : IScraper
 
                     string? urlHash = repository.ComputeSha256Hash(link);
 
-                    /* Write to console during development ATTN: uncomment for development to watch the scraper work.
-                     * Currently commented out because it makes the logs massive. */
-
-                    // Console.WriteLine($"Description: {description}, Price: {price}, Link: {link}, ImgSrce: {imgUrl}");
-
                     // Randomly move the mouse around
                     var boundingBox = await item.BoundingBoxAsync();
                     if (boundingBox != null)
@@ -161,7 +157,6 @@ public class MercariScraper : IScraper
                     if (uniqueUrlHashes.Contains(urlHash))
                     {
                         repeatCount++;
-                        Console.WriteLine($"Current repeats: {repeatCount}");
                         if (repeatCount >= repeatLimit) break;
                     }
                     else
