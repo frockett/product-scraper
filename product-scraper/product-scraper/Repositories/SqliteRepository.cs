@@ -236,4 +236,19 @@ public class SqliteRepository : IRepository
             return null;
         }
     }
+
+    public async Task DeleteOldListings()
+    {
+        try
+        {
+            DateTime cutoffDate = DateTime.UtcNow.AddDays(-20);
+            var oldListings = await context.MercariListings.Where(x => x.CreatedAt <= cutoffDate).ToListAsync();
+            context.MercariListings.RemoveRange(oldListings);
+            await context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw;
+        }
+    }
 }

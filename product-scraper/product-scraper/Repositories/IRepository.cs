@@ -22,4 +22,5 @@ public interface IRepository
     public Task<List<FilterCriteria>> GetAllFilterCriteria();
     public Task ResetEmailFlags();
     public Task<List<User>>? GetAllUsers();
+    public Task DeleteOldListings();
 }
