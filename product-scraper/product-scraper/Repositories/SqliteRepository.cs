@@ -1,6 +1,8 @@
 ﻿using product_scraper.Data;
 using product_scraper.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace product_scraper.Repositories;
 
@@ -86,6 +88,59 @@ public class SqliteRepository : IRepository
 
         return listings;
     }
+
+    public async Task<HashSet<string>> LoadExistingUrlHashes()
+    {
+        var urlHashes = await context.MercariListings.Select(l => l.UrlHash).ToListAsync();
+        return new HashSet<string>(urlHashes);
+    }
+
+    public async Task UpdateUrlHashes()
+    {
+        try
+        {
+            var batchSize = 100;
+            int numberOfLisitingsProcessed;
+            List<MercariListing> listings;
+            do
+            {
+                numberOfLisitingsProcessed = 0;
+
+                listings = await context.MercariListings
+                    .Where(l => l.UrlHash == null)
+                    .OrderBy(l => l.Id)
+                    .Take(batchSize)
+                    .ToListAsync();
+
+                foreach (var listing in listings)
+                {
+                    listing.UrlHash = ComputeSha256Hash(listing.Url);
+                    numberOfLisitingsProcessed++;
+                }
+                await context.SaveChangesAsync();
+            } while (numberOfLisitingsProcessed > 0);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating URL hashes: {ex.Message}");
+        }
+    }
+
+    public string ComputeSha256Hash(string rawUrl)
+    {
+        using (SHA256 sha256 = SHA256.Create())
+        {
+            byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(rawUrl));
+
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                builder.Append(bytes[i].ToString("x2"));
+            }
+            return builder.ToString();
+        }
+    }
+
     public async Task<List<UrlToScrape>> GetActiveUrls()
     {
         return await context.Urls.Where(u => u.Active == true).ToListAsync();  

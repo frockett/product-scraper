@@ -2,6 +2,7 @@
   "profiles": {
     "product-scraper": {
       "commandName": "Project",
+      "commandLineArgs": "\r\n",
       "workingDirectory": "C:\\Users\\itscr\\source\\repos\\product-scraper\\product-scraper\\product-scraper"
     }
   }

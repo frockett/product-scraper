@@ -25,6 +25,7 @@ public class Menu
                 "In/activate URLs",
                 "Add URL",
                 "Reset all emailed flags CAUTION",
+                "Update Url Hashes CAUTION",
                 "Exit Program",};
 
         string choice = AnsiConsole.Prompt(
@@ -56,9 +57,18 @@ public class Menu
                 await HandleResetFlags();
                 break;
             case 6:
+                await HandleUpdateHashes();
+                break;
+            case 7:
                 Environment.Exit(0);
                 break;
         }
+    }
+
+    private async Task HandleUpdateHashes()
+    {
+        await repository.UpdateUrlHashes();
+        await WaitForUser();
     }
 
     private async Task HandleResetFlags()

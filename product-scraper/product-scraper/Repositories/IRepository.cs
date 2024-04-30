@@ -9,6 +9,9 @@ public interface IRepository
     public Task RemoveOldListings();
     public Task<MercariListing> FetchMostRecentListing();
     public Task<List<MercariListing>> GetAllListings();
+    public Task<HashSet<string>> LoadExistingUrlHashes();
+    public Task UpdateUrlHashes();
+    public string ComputeSha256Hash(string rawUrl);
     public Task<List<UrlToScrape>> GetActiveUrls();
     public Task<List<UrlToScrape>> GetAllUrls();
     public Task<List<MercariListing>> GetUnemailedListings();

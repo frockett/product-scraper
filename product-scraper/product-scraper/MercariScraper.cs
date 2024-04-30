@@ -9,7 +9,7 @@ public class MercariScraper : IScraper
 {
     //private readonly IRepository repository;
     private readonly IServiceScopeFactory scopeFactory;
-    private HashSet<string> uniqueLinks = new HashSet<string>();
+    private HashSet<string> uniqueUrlHashes = new HashSet<string>();
     private List<string> userAgents = new List<string>
         {
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
@@ -86,15 +86,10 @@ public class MercariScraper : IScraper
 
     public async Task ScrapeSite(IBrowserContext context, IRepository repository, string url)
     {
-        List<MercariListing> listings = new List<MercariListing>(); // Instatiate new list here so its fresh each time
-        var oldListings = await repository.GetAllListings(); // Put old items into list
+        List<MercariListing> listings = new();
+        uniqueUrlHashes = await repository.LoadExistingUrlHashes(); // Load hashes
         int newUniqueLinks = 0; // Start the counter for new unique links
         int repeatCount = 0; // reset repeat count at the start of each scrape
-
-        foreach (var listing in oldListings)
-        {
-            uniqueLinks.Add(listing.Url); // Put each old database item into the hashset
-        }
 
         // Do the scraping
         try
@@ -145,6 +140,8 @@ public class MercariScraper : IScraper
                     var imgElement = await item.QuerySelectorAsync("img");
                     string? imgUrl = await imgElement?.GetAttributeAsync("src");
 
+                    string? urlHash = repository.ComputeSha256Hash(link);
+
                     /* Write to console during development ATTN: uncomment for development to watch the scraper work.
                      * Currently commented out because it makes the logs massive. */
 
@@ -161,7 +158,7 @@ public class MercariScraper : IScraper
 
                     price = price.Replace(",", "");
 
-                    if (uniqueLinks.Contains(link))
+                    if (uniqueUrlHashes.Contains(urlHash))
                     {
                         repeatCount++;
                         Console.WriteLine($"Current repeats: {repeatCount}");
@@ -172,19 +169,19 @@ public class MercariScraper : IScraper
                         if (int.TryParse(price, out int parsedPrice))
                         {
                             // All is normal, save the listing
-                            listings.Add(new MercariListing { Description = description, Price = parsedPrice, Url = link, ImgUrl = imgUrl });
+                            listings.Add(new MercariListing { Description = description, Price = parsedPrice, Url = link, UrlHash = urlHash, ImgUrl = imgUrl });
                         }
                         else
                         {
                             // Save listing with dummy price and log the error
-                            listings.Add(new MercariListing { Description = description, Price = 0, Url = link, ImgUrl = imgUrl });
+                            listings.Add(new MercariListing { Description = description, Price = 0, Url = link, UrlHash = urlHash, ImgUrl = imgUrl });
                             var logMessage = $"Failed to parse price for listing: {description}, Price: {price}, Url: {link}, Time: {DateTime.UtcNow}\n";
                             var logDirectory = "logs";
                             Directory.CreateDirectory(logDirectory);
                             var logFilePath = Path.Combine(logDirectory, $"failed_parses_{DateTime.UtcNow.Date:yyyyMMdd}.txt");
                             await File.AppendAllTextAsync(logFilePath, logMessage);
                         }
-                        uniqueLinks.Add(link);
+                        uniqueUrlHashes.Add(urlHash);
                         newUniqueLinks++;
                         repeatCount = 0;
                     }
