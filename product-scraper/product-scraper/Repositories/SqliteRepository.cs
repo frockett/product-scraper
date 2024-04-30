@@ -190,15 +190,6 @@ public class SqliteRepository : IRepository
         }
     }
 
-    public async Task RemoveOldListings()
-    {
-        // ATTN! CURRENTLY DELETES ALL FOR TESTING PURPOSES! FIX LATER!!
-        var listings = await GetAllListings();
-        context.MercariListings.RemoveRange(listings);
-        await context.SaveChangesAsync();
-        Console.WriteLine("Deleted!");
-    }
-
     public async Task<List<FilterCriteria>> GetAllFilterCriteria()
     {
         var filterCriteria = await context.FilterCriteria.ToListAsync();

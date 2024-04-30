@@ -6,7 +6,6 @@ public interface IRepository
 {
     public Task AddListings(List<MercariListing> listings);
     public Task AddUrl(UrlToScrape url);
-    public Task RemoveOldListings();
     public Task<MercariListing> FetchMostRecentListing();
     public Task<List<MercariListing>> GetAllListings();
     public Task<HashSet<string>> LoadExistingUrlHashes();
