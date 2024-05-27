@@ -27,7 +27,7 @@ public class ManagerService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error during scraping: {ex.Message} \n {ex.StackTrace}");
+            Console.WriteLine($"error during scraping: {ex.Message} \n {ex.StackTrace}");
             return;
         }
 
@@ -41,6 +41,16 @@ public class ManagerService
         {
             Console.WriteLine($"Error during filtering: {ex.Message} \n {ex.StackTrace}");
         }
+
+        try
+        {
+            flaggedListings = await CurrencyService.FetchSGDToCNY(flaggedListings);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during currency conversion: {ex.Message} \n {ex.StackTrace}");
+        }
+
 
         try
         {

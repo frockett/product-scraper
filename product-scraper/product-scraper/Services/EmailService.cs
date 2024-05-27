@@ -31,7 +31,7 @@ public class EmailService
         {
             sb.Append("<tr>");
             sb.AppendFormat("<td>{0}</td>", listing.Description);
-            sb.AppendFormat("<td>¥{0}</td>", listing.Price);
+            sb.AppendFormat("<td>CN¥{0}</td>", listing.Price);
             sb.AppendFormat("<td><a href='{0}'>Link</a></td>", listing.Url);
             sb.AppendFormat("<td><img src='{0}' alt='Listing image' style='height:100px;'/></td>", listing.ImgUrl ?? "https://placeholder.com/100");
             sb.Append("</tr>");

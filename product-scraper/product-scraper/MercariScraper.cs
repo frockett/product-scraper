@@ -21,7 +21,7 @@ public class MercariScraper : IScraper
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 PTST/240304.190241",
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
         };
-    private int repeatLimit = 10;
+    private int repeatLimit = 20;
     private int newLinkLimit = 500;
 
     public MercariScraper(IServiceScopeFactory scopeFactory)
@@ -35,7 +35,8 @@ public class MercariScraper : IScraper
         var playwright = await Playwright.CreateAsync();
         var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
-            Headless = true,
+            // Commented out for debugging and development
+            //Headless = false,
             //Args = new[] { "--start-maximized" }, 
             //SlowMo = 50
         });
@@ -57,7 +58,7 @@ public class MercariScraper : IScraper
             new Cookie
             {
                 Name = "country_code",
-                Value = "TW",
+                Value = "JP",
                 Domain = "jp.mercari.com",
                 Path = "/",
                 Expires = DateTimeOffset.Now.AddDays(30).ToUnixTimeSeconds()
@@ -152,7 +153,15 @@ public class MercariScraper : IScraper
                     }
                     await page.Mouse.MoveAsync(new Random().Next(0, 500), new Random().Next(0, 500)); // Adjust dimensions based on expected page size
 
-                    price = price.Replace(",", "");
+                    if(!float.TryParse(price, out float parsedFloatPrice)) // If it can't be parsed as a float, then carry on as normal (maybe it's in JPY again)
+                    {
+                        price = price.Replace(",", "");
+                    }
+                    else
+                    {
+                        price = Convert.ToInt32(parsedFloatPrice).ToString(); // This is horrifically stupid but I don't want to refactor the int parsing code right now, this is a band-aid  fix for when the price is displayed in SGD
+                    }
+                    
 
                     if (uniqueUrlHashes.Contains(urlHash))
                     {
