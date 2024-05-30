@@ -48,9 +48,52 @@ public class MercariScraper : IScraper
             ViewportSize = new ViewportSize { Height = 1080, Width = 1920 },
         });
 
-        await context.AddInitScriptAsync(@"Object.defineProperty(navigator, 'webdriver', {
-                                        get: () => undefined,
-                                        });");
+        await context.AddInitScriptAsync(@"
+            // Remove WebDriver property
+            delete Object.getPrototypeOf(navigator).webdriver;
+
+            // Mock Permissions API
+            const originalQuery = window.navigator.permissions.query;
+            window.navigator.permissions.query = (parameters) => 
+                parameters.name === 'notifications' ? 
+                Promise.resolve({ state: 'denied' }) : 
+                originalQuery(parameters);
+
+            // Spoof Plugins
+            Object.defineProperty(navigator, 'plugins', {
+                get: () => [
+                    { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer', description: 'Portable Document Format', '__mimeTypes': ['application/pdf'] },
+                    { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai', description: '', '__mimeTypes': ['application/pdf'] },
+                    { name: 'Native Client', filename: 'internal-nacl-plugin', description: '', '__mimeTypes': ['application/pdf'] },
+                ]
+            });
+
+            // Spoof MIME types
+            Object.defineProperty(navigator, 'mimeTypes', {
+                get: () => [{
+                    type: 'application/pdf',
+                    suffixes: 'pdf',
+                    description: '',
+                    enabledPlugin: {
+                        description: 'Portable Document Format',
+                        filename: 'internal-pdf-viewer',
+                        name: 'Chrome PDF Plugin'
+                    }
+                }]
+            });
+
+            // WebGL vendor and renderer spoofing
+            const getParameter = WebGLRenderingContext.prototype.getParameter;
+            WebGLRenderingContext.prototype.getParameter = function(parameter) {
+                if (parameter === 37445) { // UNMASKED_VENDOR_WEBGL
+                    return 'Intel Inc.';
+                }
+                if (parameter === 37446) { // UNMASKED_RENDERER_WEBGL
+                    return 'Intel Iris OpenGL Engine';
+                }
+                return getParameter(parameter);
+            };
+        ");
 
 
         await context.AddCookiesAsync(new[]
@@ -98,6 +141,14 @@ public class MercariScraper : IScraper
         {
             var page = await context.NewPageAsync();
             await page.GotoAsync(url);
+
+            // This code block is for debug screenshots
+
+            string filePath = Path.Combine(Environment.CurrentDirectory, "screenshotheadlessChromeTest.png");
+            await page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = filePath
+            });
 
             do
             {
