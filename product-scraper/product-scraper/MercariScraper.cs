@@ -144,11 +144,11 @@ public class MercariScraper : IScraper
 
             // This code block is for debug screenshots
 
-            string filePath = Path.Combine(Environment.CurrentDirectory, "screenshotheadlessChromeTest.png");
-            await page.ScreenshotAsync(new PageScreenshotOptions
-            {
-                Path = filePath
-            });
+            //string filePath = Path.Combine(Environment.CurrentDirectory, "screenshotheadlessChromeTest.png");
+            //await page.ScreenshotAsync(new PageScreenshotOptions
+            //{
+            //    Path = filePath
+            //});
 
             do
             {
