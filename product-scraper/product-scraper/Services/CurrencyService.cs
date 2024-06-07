@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace product_scraper.Services;
 
@@ -47,12 +48,12 @@ public static class CurrencyService
             }
             catch (HttpRequestException e)
             {
-                Console.WriteLine($"Request error: {e.Message}");
+                Log.Information($"Request error: {e.Message}");
                 return flaggedListings;
             }
             catch (JsonException e)
             {
-                Console.WriteLine($"Error parsing JSON: {e.Message}");
+                Log.Information($"Error parsing JSON: {e.Message}");
                 return flaggedListings;
             }
         }

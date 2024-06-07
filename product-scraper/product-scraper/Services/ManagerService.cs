@@ -1,6 +1,7 @@
 ﻿using product_scraper.Dtos;
 using product_scraper.Models;
 using product_scraper.Repositories;
+using Serilog;
 
 namespace product_scraper.Services;
 
@@ -27,7 +28,7 @@ public class ManagerService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"error during scraping: {ex.Message} \n {ex.StackTrace}");
+            Log.Error($"error during scraping: {ex.Message} \n {ex.StackTrace}");
             return;
         }
 
@@ -39,7 +40,7 @@ public class ManagerService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error during filtering: {ex.Message} \n {ex.StackTrace}");
+            Log.Error($"Error during filtering: {ex.Message} \n {ex.StackTrace}");
         }
 
         try
@@ -48,7 +49,7 @@ public class ManagerService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error during currency conversion: {ex.Message} \n {ex.StackTrace}");
+            Log.Error($"Error during currency conversion: {ex.Message} \n {ex.StackTrace}");
         }
 
 
@@ -64,7 +65,7 @@ public class ManagerService
         }
         catch(Exception ex)
         {
-            Console.WriteLine($"Error during email creation/sending: {ex.Message} \n {ex.StackTrace}");
+            Log.Error($"Error during email creation/sending: {ex.Message} \n {ex.StackTrace}");
         }
 
         try
@@ -73,7 +74,7 @@ public class ManagerService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error during DB clean-up: {ex.Message} \n {ex.StackTrace}");
+            Log.Error($"Error during DB clean-up: {ex.Message} \n {ex.StackTrace}");
         }
     }
 }

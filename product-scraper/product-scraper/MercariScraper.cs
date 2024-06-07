@@ -2,6 +2,7 @@
 using Microsoft.Playwright;
 using product_scraper.Models;
 using product_scraper.Repositories;
+using Serilog;
 
 namespace product_scraper;
 
@@ -113,7 +114,7 @@ public class MercariScraper : IScraper
             using (var scope = scopeFactory.CreateScope())
             {
                 var repository = scope.ServiceProvider.GetRequiredService<IRepository>();
-                Console.WriteLine($"Navigating to {url.Url}");
+                Log.Information("Navigating to {Url}", url.Url);
                 await ScrapeSite(context, repository, url.Url);
             }
         }
@@ -152,12 +153,12 @@ public class MercariScraper : IScraper
 
             do
             {
-                Console.WriteLine("Starting the loop again! Woohoo!");
+                Log.Information("Waiting for page load");
                 await page.WaitForSelectorAsync("li[data-testid='item-cell']", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible });
 
                 // Scroll to end of page to load all listings
                 await Task.Delay(new Random().Next(500, 1500));
-                Console.WriteLine("I've waited! Now I'm going to scroll!");
+                Log.Information("Began scrolling");
 
                 try
                 {
@@ -165,16 +166,16 @@ public class MercariScraper : IScraper
                 }
                 catch (TimeoutException ex)
                 {
-                    Console.WriteLine($"An exception occurred during scrolling: {ex.Message}");
+                    Log.Error(ex, "An exception occurred during scrollin");
                     break;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"An exception occurred during scrolling: {ex.Message}");
+                    Log.Error(ex, "An exception occurred during scrolling");
                     break;
                 }
  
-                Console.WriteLine("I finished scrolling!");
+                Log.Information("Finished scrolling!");
 
 
                 var items = await page.QuerySelectorAllAsync("li[data-testid='item-cell']");
@@ -230,11 +231,7 @@ public class MercariScraper : IScraper
                         {
                             // Save listing with dummy price and log the error
                             listings.Add(new MercariListing { Description = description, Price = 0, Url = link, UrlHash = urlHash, ImgUrl = imgUrl });
-                            var logMessage = $"Failed to parse price for listing: {description}, Price: {price}, Url: {link}, Time: {DateTime.UtcNow}\n";
-                            var logDirectory = "logs";
-                            Directory.CreateDirectory(logDirectory);
-                            var logFilePath = Path.Combine(logDirectory, $"failed_parses_{DateTime.UtcNow.Date:yyyyMMdd}.txt");
-                            await File.AppendAllTextAsync(logFilePath, logMessage);
+                            Log.Error("Failed to parse price for listing: {description}, Price: {price}, Url: {link}, Time: {DateTime}", description, price, link, DateTime.UtcNow);
                         }
                         uniqueUrlHashes.Add(urlHash);
                         newUniqueLinks++;
@@ -255,12 +252,12 @@ public class MercariScraper : IScraper
                 }
                 else if (nextButton == null)
                 {
-                    Console.WriteLine("No next button found!");
+                    Log.Error("No next button found!");
                     break;
                 }
                 else if (repeatCount >= repeatLimit)
                 {
-                    Console.WriteLine($"Repeat limit of {repeatLimit} has been met!");
+                    Log.Information("Repeat limit of {RepeatLimit} has been met!", repeatLimit);
                     break;
                 }
 
@@ -269,15 +266,11 @@ public class MercariScraper : IScraper
 
             await repository.AddListings(listings);
             await page.CloseAsync();
-            Console.WriteLine($"{listings.Count} listings saved.");
+            Log.Information("{listingsCount} listings saved from {url}.", listings.Count, url);
         }
         catch (Exception ex)
         {
-            var logDirectory = "logs";
-            var logFilePath = Path.Combine(logDirectory, "error_log.txt");
-            var logMessage = $"Error occurred at {DateTime.UtcNow}: {ex.Message}\nStack Trace: {ex.StackTrace}\n";
-            Directory.CreateDirectory(logDirectory);
-            await File.AppendAllTextAsync(logFilePath, logMessage);
+            Log.Error("Error occurred while operating MercariScraper: {message}. {stackTrace}", ex.Message, ex.StackTrace);
         }
     }
 
@@ -315,7 +308,7 @@ public class MercariScraper : IScraper
             }
             else
             {
-                Console.WriteLine("Scrolling operation timed out.");
+                Log.Information("Scrolling operation timed out.");
                 throw new TimeoutException("The scrolling operation timed out.");
             }
         }
@@ -326,7 +319,7 @@ public class MercariScraper : IScraper
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Exception during scrolling: {ex.Message}");
+            Log.Error("Exception during scrolling: {exMessage}", ex.Message);
             throw;
         }
 

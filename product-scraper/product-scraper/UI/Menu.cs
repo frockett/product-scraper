@@ -1,6 +1,7 @@
 ﻿using product_scraper.Models;
 using product_scraper.Repositories;
 using Spectre.Console;
+using Serilog;
 
 namespace product_scraper.UI;
 
@@ -177,7 +178,7 @@ public class Menu
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Log.Error(ex.Message);
         }
         await WaitForUser();
     }

@@ -3,6 +3,7 @@ using System.Net;
 using product_scraper.Dtos;
 using System.Text;
 using product_scraper.Models;
+using Serilog;
 
 namespace product_scraper.Services;
 
@@ -82,8 +83,7 @@ public class EmailService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"The email to {address.User} at {address.Address} could not be sent.");
-                Console.WriteLine(ex.ToString());
+                Log.Error(ex, "The email to {user} at {address} could not be sent.", address.User, address.Address);
             }
         }
 

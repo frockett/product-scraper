@@ -3,6 +3,7 @@ using product_scraper.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
+using Serilog;
 
 namespace product_scraper.Repositories;
 
@@ -34,7 +35,7 @@ public class SqliteRepository : IRepository
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Log.Error(ex.Message);
                 transaction.Rollback();
             }
         }
@@ -49,7 +50,7 @@ public class SqliteRepository : IRepository
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"An error occured adding the url {url.Url}. Exception: {ex.Message}");
+            Log.Error($"An error occured adding the url {url.Url}. Exception: {ex.Message}");
         }
     }
 
@@ -68,7 +69,7 @@ public class SqliteRepository : IRepository
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Log.Error(ex.Message);
             return false;
         }
 
@@ -84,7 +85,7 @@ public class SqliteRepository : IRepository
     {
         var listings = await context.MercariListings.ToListAsync();
 
-        Console.Write($"There are {listings.Count} listings total");
+        Log.Information($"There are {listings.Count} listings total");
 
         return listings;
     }
@@ -122,7 +123,7 @@ public class SqliteRepository : IRepository
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error updating URL hashes: {ex.Message}");
+            Log.Error($"Error updating URL hashes: {ex.Message}");
         }
     }
 
@@ -186,7 +187,7 @@ public class SqliteRepository : IRepository
         }
         catch(Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Log.Error(ex.Message);
         }
     }
 
@@ -210,7 +211,7 @@ public class SqliteRepository : IRepository
         }
         catch(Exception ex)
         {
-            Console.WriteLine($"Database operation failed. {ex.Message}");
+            Log.Error($"Database operation failed. {ex.Message}");
         }
     }
 
@@ -223,7 +224,7 @@ public class SqliteRepository : IRepository
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Log.Error(ex.Message);
             return null;
         }
     }

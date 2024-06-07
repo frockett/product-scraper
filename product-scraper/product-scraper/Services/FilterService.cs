@@ -2,6 +2,7 @@
 using product_scraper.Dtos;
 using product_scraper.Models;
 using product_scraper.Repositories;
+using Serilog;
 
 namespace product_scraper.Services;
 
@@ -49,7 +50,7 @@ public class FilterService : IFilterService
         }
         // Flag them as emailed in the database.
         await repository.MarkListingsAsEmailed(flaggedIds);
-
+        Log.Information("{total} items flagged", flaggedListings.Count); 
         return flaggedListings;
     }
 }
