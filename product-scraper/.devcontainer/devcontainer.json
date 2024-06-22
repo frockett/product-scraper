@@ -1,0 +1,16 @@
+{
+    "name": "C# Dev Container",
+    "build": {
+      "context": "..",
+      "dockerfile": "../Dockerfile"
+    },
+    "features": {
+      "ghcr.io/devcontainers/features/dotnet:2": {}
+    },
+    "mounts": [
+      "source=${localWorkspaceFolder}/product-scraper/database,target=/app/database,type=bind",
+      "source=${localWorkspaceFolder}/product-scraper/logs,target=/app/logs,type=bind"
+    ],
+    "postCreateCommand": "dotnet restore"
+  }
+  
